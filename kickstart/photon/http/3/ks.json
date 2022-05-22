@@ -1,0 +1,85 @@
+{
+  "disk": "/dev/sda",
+  "partitions": [
+    {
+      "mountpoint": "/boot",
+      "size": 128,
+      "filesystem": "ext4"
+    },
+    {
+      "mountpoint": "/",
+      "size": 32768,
+      "filesystem": "ext4",
+      "lvm": {
+        "vg_name": "vg1",
+        "lv_name": "rootfs"
+      }
+    },
+    {
+      "mountpoint": "/home",
+      "size": 0,
+      "filesystem": "ext4",
+      "lvm": {
+        "vg_name": "vg1",
+        "lv_name": "home"
+      }
+    }
+  ],
+  "bootmode": "bios",
+  "hostname": "localhost",
+  "packages": [
+    "bash",
+    "bc",
+    "bridge-utils",
+    "bzip2",
+    "ca-certificates",
+    "cloud-init",
+    "cpio",
+    "cracklib-dicts",
+    "dbus",
+    "e2fsprogs",
+    "file",
+    "filesystem",
+    "findutils",
+    "gdbm",
+    "grep",
+    "gzip",
+    "iana-etc",
+    "initramfs",
+    "iptables",
+    "iproute2",
+    "iputils",
+    "libtool",
+    "linux",
+    "motd",
+    "net-tools",
+    "openssh-server",
+    "open-vm-tools",
+    "pkg-config",
+    "photon-release",
+    "photon-repos",
+    "procps-ng",
+    "rpm",
+    "sed",
+    "sudo",
+    "tdnf",
+    "tzdata",
+    "util-linux",
+    "vim",
+    "which"
+  ],
+  "password": {
+    "age": -1,
+    "crypted": false,
+    "text": "password"
+  },
+  "postinstall": [
+    "#!/bin/sh",
+    "sed -i '/PermitRootLogin/d' /etc/ssh/sshd_config",
+    "sed -i '$aPermitRootLogin yes' /etc/ssh/sshd_config",
+    "systemctl disable iptables",
+    "systemctl enable sshd",
+    "tdnf install -y awk tar nfs-utils",
+    "tdnf clean all"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "folder": "Packer",
+  "resource_pool": "Packer",
+  "cluster": "Packer",
+  "datacenter": "Packer",
+  "datastore": "Packer",
+  "convert_to_template": "false",
+  "create_snapshot": "true",
+  "linked_clone": "true",
+  "network": "VM Network",
+  "password": "password",
+  "username": "administrator@vsphere.local",
+  "vcenter_server": "vcenter.k8s.li",
+  "insecure_connection": "true"
+}

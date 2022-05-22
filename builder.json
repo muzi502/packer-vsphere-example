@@ -1,0 +1,145 @@
+{
+  "builders": [
+    {
+      "CPUs": "{{user `cpu`}}",
+      "RAM": "{{user `memory`}}",
+      "boot_command": [
+        "{{user `boot_command_prefix`}}",
+        "{{user `boot_media_path`}}",
+        "{{user `boot_command_suffix`}}"
+      ],
+      "boot_wait": "{{user `boot_wait`}}",
+      "cluster": "{{user `cluster`}}",
+      "communicator": "ssh",
+      "convert_to_template": "{{user `convert_to_template`}}",
+      "cpu_cores": "{{user `cpu_cores`}}",
+      "create_snapshot": "{{user `create_snapshot`}}",
+      "datacenter": "{{user `datacenter`}}",
+      "datastore": "{{user `datastore`}}",
+      "disk_controller_type": "{{user `disk_controller_type`}}",
+      "firmware": "{{user `firmware`}}",
+      "floppy_dirs": "{{ user `floppy_dirs`}}",
+      "folder": "{{user `folder`}}",
+      "guest_os_type": "{{user `vsphere_guest_os_type`}}",
+      "host": "{{user `host`}}",
+      "http_directory": "{{ user `http_directory`}}",
+      "insecure_connection": "{{user `insecure_connection`}}",
+      "iso_checksum": "{{user `iso_checksum_type`}}:{{user `iso_checksum`}}",
+      "iso_urls": "{{user `iso_url`}}",
+      "name": "vsphere-iso-base",
+      "network_adapters": [
+        {
+          "network": "{{user `network`}}",
+          "network_card": "{{user `network_card`}}"
+        }
+      ],
+      "password": "{{user `password`}}",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S -E sh -c '{{user `shutdown_command`}}'",
+      "ssh_clear_authorized_keys": "false",
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "4h",
+      "ssh_username": "{{user `ssh_username`}}",
+      "storage": [
+        {
+          "disk_size": "{{user `disk_size`}}",
+          "disk_thin_provisioned": "{{user `disk_thin_provisioned`}}"
+        }
+      ],
+      "type": "vsphere-iso",
+      "username": "{{user `username`}}",
+      "vcenter_server": "{{user `vcenter_server`}}",
+      "vm_name": "{{user `base_build_version`}}",
+      "vm_version": "{{user `vmx_version`}}"
+    },
+    {
+      "CPUs": "{{user `cpu`}}",
+      "RAM": "{{user `memory`}}",
+      "cluster": "{{user `cluster`}}",
+      "communicator": "ssh",
+      "convert_to_template": "{{user `convert_to_template`}}",
+      "cpu_cores": "{{user `cpu_cores`}}",
+      "create_snapshot": "{{user `create_snapshot`}}",
+      "datacenter": "{{user `datacenter`}}",
+      "datastore": "{{user `datastore`}}",
+      "export": {
+        "force": true,
+        "manifest": "{{ user `export_manifest`}}",
+        "output_directory": "{{user `output_dir`}}"
+      },
+      "folder": "{{user `folder`}}",
+      "host": "{{user `host`}}",
+      "insecure_connection": "{{user `insecure_connection`}}",
+      "linked_clone": "{{user `linked_clone`}}",
+      "name": "vsphere-clone",
+      "network": "{{user `network`}}",
+      "password": "{{user `password`}}",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S -E sh -c '{{user `shutdown_command`}}'",
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "4h",
+      "ssh_username": "{{user `ssh_username`}}",
+      "template": "{{user `template`}}",
+      "type": "vsphere-clone",
+      "username": "{{user `username`}}",
+      "vcenter_server": "{{user `vcenter_server`}}",
+      "vm_name": "{{user `build_version`}}"
+    }
+  ],
+  "post-processors": [
+    {
+      "custom_data": {
+        "release_version": "{{user `release_version`}}",
+        "build_date": "{{isotime}}",
+        "build_name": "{{user `build_name`}}",
+        "build_timestamp": "{{user `build_timestamp`}}",
+        "build_type": "node",
+        "cpu": "{{user `cpu`}}",
+        "memory": "{{user `memory`}}",
+        "disk_size": "{{user `disk_size`}}",
+        "distro_arch": "{{ user `distro_arch` }}",
+        "distro_name": "{{ user `distro_name` }}",
+        "distro_version": "{{ user `distro_version` }}",
+        "firmware": "{{user `firmware`}}",
+        "guest_os_type": "{{user `guest_os_type`}}",
+        "os_name": "{{user `os_display_name`}}",
+        "vsphere_guest_os_type": "{{user `vsphere_guest_os_type`}}"
+      },
+      "name": "packer-manifest",
+      "output": "{{user `output_dir`}}/packer-manifest.json",
+      "strip_path": true,
+      "type": "manifest",
+      "except": [
+        "vsphere-iso-base"
+      ]
+    },
+    {
+      "inline": [
+        "python3 ./scripts/ova.py --vmx {{user `vmx_version`}} --ovf_template {{user `ovf_template`}} --build_dir={{user `output_dir`}}"
+      ],
+      "except": [
+        "vsphere-iso-base"
+      ],
+      "name": "vsphere",
+      "type": "shell-local"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "scripts",
+      "destination": "/root/scripts",
+      "except": [
+        "vsphere-iso-base"
+      ]
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "INSECURE_REGISTRY={{user `insecure_registry`}}"
+      ],
+      "inline": "bash /root/scripts/install.sh",
+      "except": [
+        "vsphere-iso-base"
+      ]
+    }
+  ]
+}

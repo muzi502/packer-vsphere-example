@@ -1,0 +1,90 @@
+# check k3s coredns server is running
+dns:
+  kubernetes.default.svc.cluster.local:
+    resolvable: true
+    addrs:
+      - 10.43.0.1
+    server: 10.43.0.10
+    timeout: 600
+    skip: false
+
+command:
+  check_k8s_scheduler_health:
+    exec: curl -k https://127.0.0.1:10259/healthz
+    exit-status: 0
+    stderr: []
+    stdout: ["ok"]
+    skip: false
+  check_k8s_controller-manager_health:
+    exec: curl -k https://127.0.0.1:10257/healthz
+    exit-status: 0
+    stderr: []
+    stdout: ["ok"]
+    skip: false
+  check_cluster_status:
+    exec: kubectl cluster-info | grep 'is running'
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - CoreDNS
+      - Kubernetes control plane
+    skip: false
+  check_node_status:
+    exec: kubectl get node -o jsonpath='{.items[].status}' | jq -r '.conditions[-1].type'
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - Ready
+    skip: false
+  check_node_address:
+    exec: kubectl get node -o wide -o json | jq -r '.items[0].status.addresses[] | select(.type == "InternalIP") | .address'
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - {{ .Vars.ip_address }}
+    skip: false
+  check_traefik_address:
+    exec: kubectl -n kube-system get svc traefik -o json | jq -r '.status.loadBalancer.ingress[].ip'
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - {{ .Vars.ip_address }}
+    skip: false
+  check_container_status:
+    exec: crictl ps --output=json | jq -r '.containers[].metadata.name' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - coredns
+      - /lb-.*-443/
+      - /lb-.*-80/
+      - traefik
+    skip: false
+  check_kube_system_namespace_pod_status:
+    exec: kubectl get pod -n kube-system -o json | jq -r '.items[] | select((.status.phase != "Running") and (.status.phase != "Succeeded") and (.status.phase != "Completed"))'
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout: ["!string"]
+  check_k8s_deployment_status:
+    exec: kubectl get deploy --all-namespaces -o json | jq -r '.items[]| select(.status.replicas == .status.availableReplicas) | .metadata.name' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - coredns
+      - traefik
+    skip: false
+  check_k8s_daemonset_status:
+    exec: kubectl get daemonset --all-namespaces -o json | jq -r '.items[]| select(.status.replicas == .status.availableReplicas) | .metadata.name' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - svclb-traefik
+    skip: false

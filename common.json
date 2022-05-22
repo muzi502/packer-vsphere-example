@@ -1,0 +1,22 @@
+{
+  "ssh_username": "root",
+  "ssh_password": "password",
+  "boot_wait": "15s",
+  "disk_controller_type": "lsilogic",
+  "disk_thin_provisioned": "true",
+  "disk_type_id": "0",
+  "firmware": "bios",
+  "cpu": "2",
+  "cpu_cores": "1",
+  "memory": "4096",
+  "disk_size": "65536",
+  "network_card": "e1000",
+  "ssh_timeout": "3m",
+  "vmx_version": "14",
+  "base_build_version": "{{user `template`}}",
+  "build_timestamp": "{{timestamp}}",
+  "build_name": "k3s",
+  "build_version": "{{user `ova_name`}}",
+  "export_manifest": "none",
+  "insecure_registry": "hub.k8s.li"
+}
