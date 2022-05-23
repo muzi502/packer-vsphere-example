@@ -15,10 +15,11 @@ while true; do
   fi
 done
 
-cat > ${HOME}/.goss-vars.yaml << EOF
+cd ${HOME}/.goss
+cat > vars.yaml << EOF
 ip_address: $(ip r get 1 | sed "s/ uid.*//g" | awk '{print $NF}' | head -n1)
 cpu_core_number: $(grep -c ^processor /proc/cpuinfo)
 memory_size: $(grep '^MemTotal:' /proc/meminfo | awk '{print $2}')
 available_memory_size: $(grep '^MemAvailable:' /proc/meminfo | awk '{print $2}')
 EOF
-goss --vars ${HOME}/.goss-vars.yaml -g ${HOME}/.goss.yaml validate --retry-timeout=10s
+goss --vars vars.yaml -g goss.yaml validate --retry-timeout=10s

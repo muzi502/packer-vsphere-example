@@ -8,6 +8,43 @@ dns:
     timeout: 600
     skip: false
 
+addr:
+  tcp://10.42.0.1:443:
+    reachable: true
+    timeout: 500
+  udp://10.43.0.10:53:
+    reachable: true
+    timeout: 500
+
+interface:
+  cni0:
+    exists: true
+    addrs:
+      - 10.42.0.1/24
+port:
+  tcp:22:
+    listening: true
+    ip:
+      - 0.0.0.0
+    skip: false
+  tcp6:6443:
+    listening: true
+    skip: false
+
+# check system services status
+service:
+  firewalld:
+    enabled: false
+    running: false
+  sshd:
+    enabled: true
+    running: true
+    skip: false
+  k3s:
+    enabled: true
+    running: true
+    skip: false
+
 command:
   check_k8s_scheduler_health:
     exec: curl -k https://127.0.0.1:10259/healthz

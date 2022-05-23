@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filebrowser
+  labels:
+    name: filebrowser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: filebrowser
+  template:
+    metadata:
+      labels:
+        name: filebrowser
+    spec:
+      containers:
+      - name: nginx
+        image: docker.io/library/nginx:1.21.6
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/nginx/html/files
+        securityContext:
+          runAsUser: 0
+      - name: filebrowser
+        image: docker.io/filebrowser/filebrowser:v2.21.1
+        ports:
+        - containerPort: 8000
+          name: http
+        args:
+        - --noauth
+        - --port=8000
+        - --address=0.0.0.0
+        - --baseurl=/filebrowser
+        - --root=/data
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        hostPath:
+          path: /data
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: filebrowser
+spec:
+  selector:
+    name: filebrowser
+  ports:
+  - name: filebrowser
+    protocol: TCP
+    port: 8000
+    targetPort: 8000
+  - name: nginx
+    protocol: TCP
+    port: 8080
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  name: filebrowser
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: filebrowser
+            port:
+              number: 8000
+        path: /filebrowser
+        pathType: Prefix
+      - backend:
+          service:
+            name: filebrowser
+            port:
+              number: 8080
+        path: /files
+        pathType: Prefix

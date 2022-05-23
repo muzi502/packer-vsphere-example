@@ -126,7 +126,15 @@
     {
       "type": "file",
       "source": "scripts",
-      "destination": "/root/scripts",
+      "destination": "/root",
+      "except": [
+        "vsphere-iso-base"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "resources",
+      "destination": "/root",
       "except": [
         "vsphere-iso-base"
       ]

@@ -1,0 +1,75 @@
+# check k3s coredns server is running
+gossfile:
+  k3s.yaml: {}
+dns:
+  filebrowser.default.svc.cluster.local:
+    resolvable: true
+    server: 10.43.0.10
+    timeout: 600
+    skip: false
+  argo-workflow-argo-workflows-server.default.svc.cluster.local:
+    resolvable: true
+    server: 10.43.0.10
+    timeout: 600
+    skip: false
+
+http:
+  http://{{ .Vars.ip_address }}/filebrowser/:
+    status: 200
+    timeout: 600
+    skip: false
+    method: GET
+  http://{{ .Vars.ip_address }}/workflows/api/v1/version:
+    status: 200
+    timeout: 600
+    skip: false
+    method: GET
+
+command:
+  check_container_images:
+    exec: crictl images --output=json | jq -r '.images[].repoTags[]' | awk -F '/' '{print $NF}' | awk -F ':' '{print $1}' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - argocli
+      - argoexec
+      - workflow-controller
+      - filebrowser
+      - nginx
+    skip: false
+  check_container_status:
+    exec: crictl ps --output=json | jq -r '.containers[].metadata.name' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - argo-server
+      - controller
+      - nginx
+      - filebrowser
+    skip: false
+  check_k8s_deployment_status:
+    exec: kubectl get deploy -n default -o json | jq -r '.items[]| select(.status.replicas == .status.availableReplicas) | .metadata.name' | sort -u
+    exit-status: 0
+    stderr: []
+    timeout: 0
+    stdout:
+      - argo-workflow-argo-workflows-server
+      - argo-workflow-argo-workflows-workflow-controller
+      - filebrowser
+    skip: false
+
+matching:
+  check_vm_cpu_core:
+    content: {{ .Vars.cpu_core_number }}
+    matches:
+      gt: 1
+  check_vm_memory_size:
+    content: {{ .Vars.memory_size }}
+    matches:
+      gt: 1880000
+  check_available_memory_size:
+    content: {{ .Vars.available_memory_size }}
+    matches:
+      gt: 600000

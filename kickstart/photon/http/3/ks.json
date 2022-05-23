@@ -16,12 +16,12 @@
       }
     },
     {
-      "mountpoint": "/home",
+      "mountpoint": "/data",
       "size": 0,
       "filesystem": "ext4",
       "lvm": {
         "vg_name": "vg1",
-        "lv_name": "home"
+        "lv_name": "data"
       }
     }
   ],
@@ -79,7 +79,7 @@
     "sed -i '$aPermitRootLogin yes' /etc/ssh/sshd_config",
     "systemctl disable iptables",
     "systemctl enable sshd",
-    "tdnf install -y awk tar nfs-utils",
+    "tdnf install -y awk tar nfs-utils wget",
     "tdnf clean all"
   ]
 }

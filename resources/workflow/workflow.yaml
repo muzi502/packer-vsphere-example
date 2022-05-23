@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: redfish-esxi-os-installer-
+  namespace: default
+spec:
+  entrypoint: redfish-esxi-os-installer
+  templates:
+  - name: redfish-esxi-os-installer
+    steps:
+    - - arguments:
+          parameters:
+          - name: command
+            value: pre-check
+        name: Precheck
+        template: installer
+    - - arguments:
+          parameters:
+          - name: command
+            value: build-iso
+        name: BuildISO
+        template: installer
+    - - arguments:
+          parameters:
+          - name: command
+            value: mount-iso
+        name: MountISO
+        template: installer
+    - - arguments:
+          parameters:
+          - name: command
+            value: reboot
+        name: Reboot
+        template: installer
+    - - arguments:
+          parameters:
+          - name: command
+            value: post-check
+        name: Postcheck
+        template: installer
+    - - arguments:
+          parameters:
+          - name: command
+            value: umount-iso
+        name: UmountISO
+        template: installer
+  - container:
+      name: installer
+      image: ghcr.io/muzi502/redfish-esxi-os-installer:v0.1.0-alpha.1
+      command:
+      - bash
+      - -c
+      - |
+        make inventory && make {{inputs.parameters.command}}
+      env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: HOST_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.hostIP
+      - name: SRC_ISO_DIR
+        value: /data/iso
+      - name: HTTP_DIR
+        value: /data/iso/redfish
+      - name: HTTP_URL
+        value: http://$(HOST_IP)/files/iso/redfish
+      - name: ESXI_ISO
+        valueFrom:
+          configMapKeyRef:
+            name: redfish-esxi-os-installer-config
+            key: esxi_iso
+      securityContext:
+        privileged: true
+      volumeMounts:
+      - mountPath: /ansible/config.yaml
+        name: config
+        readOnly: true
+        subPath: config.yaml
+      - mountPath: /data
+        name: data
+    inputs:
+      parameters:
+      - name: command
+    name: installer
+    retryStrategy:
+      limit: "2"
+      retryPolicy: OnFailure
+  volumes:
+  - configMap:
+      items:
+      - key: config
+        path: config.yaml
+      name: redfish-esxi-os-installer-config
+    name: config
+  - name: data
+    hostPath:
+      path: /data
+      type: DirectoryOrCreate
